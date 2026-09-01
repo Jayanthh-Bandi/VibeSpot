@@ -1,8 +1,8 @@
 import {
   HeartIcon,
-  HandRaisedIcon,
+ 
 } from "@heroicons/react/24/outline";
-import { FireIcon } from "@heroicons/react/24/solid";
+
 
 interface NearbyUserCardProps {
   avatar: string;
@@ -18,8 +18,7 @@ const NearbyUserCard = ({
   username,
   placeName,
   onHeart,
-  onFire,
-  onWave,
+ 
 }: NearbyUserCardProps) => {
   return (
     <div className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -56,21 +55,7 @@ const NearbyUserCard = ({
           <span className="font-medium">Like</span>
         </button>
 
-        <button
-          onClick={onFire}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-orange-50 py-3 text-orange-600 transition hover:bg-orange-100 active:scale-95"
-        >
-          <FireIcon className="h-5 w-5" />
-          <span className="font-medium">Fire</span>
-        </button>
 
-        <button
-          onClick={onWave}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-cyan-50 py-3 text-cyan-600 transition hover:bg-cyan-100 active:scale-95"
-        >
-          <HandRaisedIcon className="h-5 w-5" />
-          <span className="font-medium">Wave</span>
-        </button>
       </div>
     </div>
   );

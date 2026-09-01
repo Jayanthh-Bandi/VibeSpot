@@ -15,15 +15,12 @@ Example
 */
 
 export const registerSocket = (socket) => {
-
-    connectedSockets.set(socket.user.id, socket);
+  connectedSockets.set(socket.user.id, socket);
 
 };
 
 export const removeSocket = (socket) => {
-
-    connectedSockets.delete(socket.user.id);
-
+  connectedSockets.delete(socket.user.id);
 };
 
 export const getSocketByUserId = (userId) => {

@@ -88,6 +88,9 @@ export const sendVibeService = async (sender, body) => {
     if (reverseVibe) {
 
         const chatRoomId = uuidv4();
+        const senderSocket = getSocketByUserId(sender.id);
+
+        const receiverSocket = getSocketByUserId(receiverId);
 
         // Create Match
         const { error: matchError } = await supabase
@@ -99,6 +102,10 @@ export const sendVibeService = async (sender, body) => {
                 expires_at: new Date(Date.now() + 10 * 60 * 1000)
             });
 
+
+
+
+
         if (matchError) {
             throw new Error(matchError.message);
         }
@@ -108,6 +115,43 @@ export const sendVibeService = async (sender, body) => {
             .from("vibes")
             .delete()
             .eq("id", reverseVibe.id);
+
+
+
+    const matchPayloadForSender = {
+    matchId: chatRoomId,
+    otherUser: {
+        id: receiver.id,
+        username: receiver.username,
+        avatar_emoji: receiver.avatar_emoji,
+    },
+};
+
+const matchPayloadForReceiver = {
+    matchId: chatRoomId,
+    otherUser: {
+        id: sender.id,
+        username: sender.username,
+        avatar_emoji: sender.avatar_emoji,
+    },
+};
+
+
+console.log("=== MATCH CREATED ===");
+
+console.log("Sender ID:", sender.id);
+console.log("Receiver ID:", receiverId);
+
+console.log("Sender socket exists:", !!senderSocket);
+console.log("Receiver socket exists:", !!receiverSocket);
+
+if (senderSocket) {
+    senderSocket.emit("match_created", matchPayloadForSender);
+}
+
+if (receiverSocket) {
+    receiverSocket.emit("match_created", matchPayloadForReceiver);
+}
 
         return {
             matched: true,
@@ -136,16 +180,16 @@ export const sendVibeService = async (sender, body) => {
     if (receiverSocket) {
 
         receiverSocket.emit("incoming_vibe", {
+    id: vibe.id,
+    emoji: vibe.emoji,
+    created_at: vibe.created_at,
 
-            vibeId: vibe.id,
-
-            senderId: sender.id,
-
-            emoji: vibe.emoji,
-
-            createdAt: vibe.created_at
-
-        });
+    sender: {
+        id: sender.id,
+        username: sender.username,
+        avatar_emoji: sender.avatar_emoji
+    }
+});
 
         console.log(`Realtime vibe sent to ${receiver.email}`);
 

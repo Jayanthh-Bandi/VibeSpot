@@ -10,11 +10,65 @@ import PageHeader from "../components/PageHeader";
 import { checkInService } from "../services/checkInService";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
+import { sendVibe } from "../services/vibeService";
+import NotificationBell from "../components/NotificationBell";
+import { useSocket } from "../hooks/SocketContext";
+import PendingVibesDrawer from "../components/PendingVibesDrawer";
 
+
+import {
+  getPendingVibes,
+} from "../services/vibeService";
+
+
+import PendingVibeCard from "../components/PendingVibeCard";
 const NearbyUsersPage = () => {
   const [users, setUsers] = useState<NearbyUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+const [isPendingVibesOpen, setIsPendingVibesOpen] =
+  useState(false);
+  
+
+const [loadingVibes, setLoadingVibes] =
+  useState(false);
+
+  const loadPendingVibes = async () => {
+  try {
+    setLoadingVibes(true);
+
+    const response =
+      await getPendingVibes();
+
+    addPendingVibes(
+      response.pendingVibes
+    );
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoadingVibes(false);
+  }
+};
+
+
+
+ const {
+  unreadCount,
+  clearUnread,
+  incomingVibes,
+  addPendingVibes,
+  showMatch
+} = useSocket();
+
+
+const handleNotificationClick = async () => {
+  clearUnread();
+
+  await loadPendingVibes();
+
+  setIsPendingVibesOpen(true);
+};
+
 
 
     const handleCheckOut = async () => {
@@ -39,6 +93,39 @@ const NearbyUsersPage = () => {
     );
   } finally {
     setCheckingOut(false);
+  }
+};
+
+
+const handleSendVibe = async (
+  receiverId: string,
+  username: string,
+  avatarEmoji: string,
+  emoji: string
+) => {
+  try {
+    const response = await sendVibe({
+      receiverId,
+      emoji,
+    });
+
+    if (response.matched) {
+      showMatch({
+        matchId: response.chatRoomId!,
+        otherUser: {
+          id: receiverId,
+          username,
+          avatar_emoji: avatarEmoji,
+        },
+      });
+    } else {
+      alert(response.message);
+    }
+  } catch (error: any) {
+    alert(
+      error.response?.data?.message ??
+      "Unable to send vibe."
+    );
   }
 };
 
@@ -91,17 +178,25 @@ const [checkingOut, setCheckingOut] =
      <AppLayout>
         <PageHeader
   title="Nearby Users"
+  subtitle="Meet people around you"
   rightAction={
-    <CustomButton
-      fullWidth={false}
-      loading={refreshing}
-      onClick={handleRefresh}
-    >
-      Refresh
-    </CustomButton>
+    <div className="flex items-center gap-3">
+      <NotificationBell
+        count={unreadCount}
+        onClick={handleNotificationClick}
+      />
+
+      <CustomButton
+        fullWidth={false}
+        loading={refreshing}
+        onClick={handleRefresh}
+      >
+        Refresh
+      </CustomButton>
+    </div>
   }
 />
-      
+     
 
       {users.length === 0 ? (
         <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
@@ -123,9 +218,32 @@ const [checkingOut, setCheckingOut] =
     avatar={item.users.avatar_emoji}
     username={item.users.username}
     placeName={item.place_name}
-    onHeart={() => console.log("❤️", item.users.id)}
-    onFire={() => console.log("🔥", item.users.id)}
-    onWave={() => console.log("👋", item.users.id)}
+    onHeart={() =>
+  handleSendVibe(
+    item.users.id,
+    item.users.username,
+    item.users.avatar_emoji,
+    "❤️"
+  )
+}
+
+onFire={() =>
+  handleSendVibe(
+    item.users.id,
+    item.users.username,
+    item.users.avatar_emoji,
+    "🔥"
+  )
+}
+
+onWave={() =>
+  handleSendVibe(
+    item.users.id,
+    item.users.username,
+    item.users.avatar_emoji,
+    "👋"
+  )
+}
   />
 ))}
         </div>
@@ -140,6 +258,35 @@ const [checkingOut, setCheckingOut] =
       Check Out
     </CustomButton>
   </div>
+
+
+  <PendingVibesDrawer
+  open={isPendingVibesOpen}
+  onClose={() => setIsPendingVibesOpen(false)}
+>
+  {loadingVibes ? (
+  <div className="flex justify-center p-8">
+    <LoadingSpinner />
+  </div>
+) : incomingVibes.length === 0 ? (
+  <div className="p-8 text-center text-gray-500">
+    No pending vibes ❤️
+  </div>
+) : (
+  incomingVibes.map((vibe) => (
+  <PendingVibeCard
+    key={vibe.sender.id}
+    username={vibe.sender.username}
+    avatarEmoji={vibe.sender.avatar_emoji}
+    emoji={vibe.emoji}
+    createdAt={vibe.created_at}
+  />
+))
+)}
+</PendingVibesDrawer>
+
+
+
     </AppLayout>
   );
 };

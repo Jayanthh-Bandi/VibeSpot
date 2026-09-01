@@ -7,7 +7,7 @@ export const joinMatchService = async (socket, matchId) => {
     const { data, error } = await supabase
         .from("matches")
         .select("*")
-        .eq("id", matchId)
+        .eq("chat_room_id", matchId)
         .single();
 
     if (error || !data) {
@@ -22,13 +22,23 @@ export const joinMatchService = async (socket, matchId) => {
         throw new AppError("You are not authorized to join this match.", 403);
     }
 
-    socket.matchId = matchId;
+    // socket.matchId = matchId;
 
-    socket.join(matchId);
+    // socket.join(matchId);
 
-    return {
-        matchId
-    };
+    // return {
+    //     matchId
+    // };
+
+    socket.matchId = data.id; // Database primary key
+
+    socket.chatRoomId = data.chat_room_id; // Socket room
+
+    socket.join(data.chat_room_id);
+
+return {
+    matchId: data.chat_room_id
+};
 
 };
 
@@ -56,7 +66,7 @@ export const handleSendMessage = async (socket, data) => {
 
         senderId: savedMessage.sender_id,
 
-        message: savedMessage.content,
+        content: savedMessage.content,
 
         sentAt: savedMessage.sent_at
 

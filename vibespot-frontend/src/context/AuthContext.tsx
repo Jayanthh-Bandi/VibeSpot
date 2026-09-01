@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { User } from "../types/auth";
-
+import { connectSocket, disconnectSocket } from "../services/socketService";
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -50,18 +50,19 @@ setLoading(false);
     setLoading(false);
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
-    localStorage.setItem("token", newToken);
-    localStorage.setItem("user", JSON.stringify(newUser));
+ const login = (newToken: string, newUser: User) => {
+  localStorage.setItem("token", newToken);
+  localStorage.setItem("user", JSON.stringify(newUser));
 
-    setToken(newToken);
-    setUser(newUser);
-  };
+  setToken(newToken);
+  setUser(newUser);
+
+};
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
+  disconnectSocket();
     setToken(null);
     setUser(null);
   };

@@ -4,7 +4,7 @@ import { env } from "../config/env.js";
 const requiredVariables = {
     PORT: env.PORT,
     SUPABASE_URL: env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY
+   // SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY
 };
 
 const validateEnv = () => {

@@ -6,13 +6,16 @@ import App from "./App";
 import "./index.css";
 
 import { AuthProvider } from "./context/AuthContext"
+import { SocketProvider } from "./hooks/SocketContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+<AuthProvider>
+    <SocketProvider>
+      <App/>
+    </SocketProvider>
+</AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

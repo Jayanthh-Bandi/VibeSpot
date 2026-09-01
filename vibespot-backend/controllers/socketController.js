@@ -44,9 +44,9 @@ export const registerSocketEvents = (io, socket) => {
 
     socket.on("typing_start", () => {
 
-        if (!socket.matchId) return;
+        if (!socket.chatRoomId) return;
 
-        socket.to(socket.matchId).emit("user_typing", {
+        socket.to(socket.chatRoomId).emit("user_typing", {
 
             email: socket.user.email
 
@@ -56,9 +56,9 @@ export const registerSocketEvents = (io, socket) => {
 
     socket.on("typing_stop", () => {
 
-        if (!socket.matchId) return;
+        if (!socket.chatRoomId) return;
 
-        socket.to(socket.matchId).emit("user_stopped_typing");
+        socket.to(socket.chatRoomId).emit("user_stopped_typing");
 
     });
 
@@ -72,7 +72,7 @@ export const registerSocketEvents = (io, socket) => {
 
             });
 
-            io.to(socket.matchId).emit(
+            io.to(socket.chatRoomId).emit(
 
                 "receive_message",
 

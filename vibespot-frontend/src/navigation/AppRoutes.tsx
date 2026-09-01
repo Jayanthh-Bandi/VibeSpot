@@ -8,6 +8,7 @@ import RegisterPage from "../pages/RegisterPage";
 import HomePage from "../pages/HomePage";
 import NearbyUsersPage from "../pages/NearbyUsersPage";
 import ProfilePage from "../pages/ProfilePage";
+import ChatPage from "../pages/ChatPage";
 
 const AppRoutes = () => {
   return (
@@ -23,6 +24,7 @@ const AppRoutes = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/nearby" element={<NearbyUsersPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/chat/:matchId" element={<ChatPage />}/>
       </Route>
 
       {/* Fallback */}
