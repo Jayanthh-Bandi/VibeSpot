@@ -28,7 +28,11 @@ router.get("/profile", authMiddleware, (req, res) => {
 });
 
 // Get Logged-in User
-router.get("/me", getCurrentUser);
+router.get(
+    "/me",
+    authMiddleware,
+    getCurrentUser
+);
 
 // Logout
 router.post("/logout", logoutUser);

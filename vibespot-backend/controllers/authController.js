@@ -1,4 +1,8 @@
-import { registerUserService, loginUserService } from "../services/authService.js";
+import {
+    registerUserService,
+    loginUserService,
+    getCurrentUserService
+} from "../services/authService.js";
 import { successResponse,errorResponse } from "../utils/apiResponse.js";
 export const registerUser = async (req, res) => {
 
@@ -63,7 +67,33 @@ export const loginUser = async (req, res) => {
 };
 
 export const getCurrentUser = async (req, res) => {
-    res.json({ message: "Current user coming soon." });
+
+    try {
+
+        const user = await getCurrentUserService(req.user);
+
+        return res.status(200).json({
+
+            success: true,
+
+            user
+
+        });
+
+    }
+
+    catch (error) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
+
 };
 
 export const logoutUser = async (req, res) => {

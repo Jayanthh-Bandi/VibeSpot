@@ -49,6 +49,7 @@ export const registerUserService = async ({
             .from("users")
             .insert({
                 id: authData.user.id,
+                email,
                 username,
                 avatar_emoji: avatarEmoji
             });
@@ -88,4 +89,34 @@ export const loginUserService = async ({ email, password }) => {
         session: data.session,
         user: data.user
     };
+};
+export const getCurrentUserService = async (user) => {
+
+    const { data, error } = await supabase
+        .from("users")
+        .select(`
+            id,
+            username,
+            email,
+            avatar_emoji
+        `)
+        .eq("id", user.id)
+        .single();
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return {
+
+        id: data.id,
+
+        username: data.username,
+
+        email: data.email,
+
+        avatarEmoji: data.avatar_emoji
+
+    };
+
 };
