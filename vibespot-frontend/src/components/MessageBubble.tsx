@@ -7,9 +7,6 @@ interface Props {
 
 const MessageBubble = ({ message }: Props) => {
   const { user } = useAuth();
-
-
-     console.log(message);
   const isMine = message.senderId === user?.id;
 
   return (
@@ -19,25 +16,13 @@ const MessageBubble = ({ message }: Props) => {
       }`}
     >
       <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow ${
+        className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-4 py-3 shadow ${
           isMine
             ? "bg-blue-600 text-white rounded-br-md"
             : "bg-white text-gray-900 rounded-bl-md"
         }`}
       >
-        {/* {!isMine && (
-          <div className="mb-1 flex items-center gap-2">
-            <span className="text-xl">
-              {message.sender.avatarEmoji}
-            </span>
-
-            <span className="text-xs font-semibold">
-              {message.sender.username}
-            </span>
-          </div>
-        )} */}
-
-        <p className="break-words">
+        <p className="break-words whitespace-pre-wrap">
           {message.content}
         </p>
 
