@@ -25,3 +25,8 @@ export const getPendingVibes =
 
     return response.data;
   };
+
+export const removeVibe = async (receiverId: string) => {
+  const response = await api.delete(`/vibes/${receiverId}`);
+  return response.data;
+};

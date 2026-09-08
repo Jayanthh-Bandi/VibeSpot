@@ -20,7 +20,9 @@ export const registerSocket = (socket) => {
 };
 
 export const removeSocket = (socket) => {
-  connectedSockets.delete(socket.user.id);
+  if (connectedSockets.get(socket.user.id) === socket) {
+    connectedSockets.delete(socket.user.id);
+  }
 };
 
 export const getSocketByUserId = (userId) => {

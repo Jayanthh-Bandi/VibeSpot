@@ -30,6 +30,10 @@ export const joinMatchService = async (socket, matchId) => {
     //     matchId
     // };
 
+    if (socket.chatRoomId) {
+        socket.leave(socket.chatRoomId);
+    }
+
     socket.matchId = data.id; // Database primary key
 
     socket.chatRoomId = data.chat_room_id; // Socket room
@@ -46,6 +50,10 @@ export const handleSendMessage = async (socket, data) => {
 
     if (!socket.matchId) {
         throw new AppError("Join a match first.", 400);
+    }
+
+    if (typeof data.message !== "string" || !data.message.trim()) {
+        throw new AppError("Message cannot be empty.", 400);
     }
 
     const savedMessage = await saveMessageService({

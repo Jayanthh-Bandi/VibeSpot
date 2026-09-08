@@ -3,6 +3,7 @@ import {
     loginUserService,
     getCurrentUserService
 } from "../services/authService.js";
+import { updateUserProfileService } from "../services/authService.js";
 import { successResponse,errorResponse } from "../utils/apiResponse.js";
 export const registerUser = async (req, res) => {
 
@@ -46,7 +47,9 @@ export const loginUser = async (req, res) => {
                     expiresIn: result.session.expires_in,
                     user: {
                         id: result.user.id,
-                        email: result.user.email
+                        email: result.user.email,
+                        username: result.user.username,
+                        avatarEmoji: result.user.avatarEmoji
                     }
                 }
             )
@@ -96,7 +99,22 @@ export const getCurrentUser = async (req, res) => {
 
 };
 
+export const updateUserProfile = async (req, res) => {
+    try {
+        const user = await updateUserProfileService(req.user, req.body);
+        return res.status(200).json({
+            success: true,
+            message: "Profile updated successfully.",
+            user
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 export const logoutUser = async (req, res) => {
     res.json({ message: "Logout coming soon." });
 };
-

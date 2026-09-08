@@ -9,7 +9,10 @@ import {
 
 import type { Socket } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
-import { connectSocket } from "../services/socketService";
+import {
+  connectSocket,
+  disconnectSocket,
+} from "../services/socketService";
 import type { PendingVibe } from "../types/vibe";
 import type { MatchNotification } from "../types/match";
 
@@ -75,6 +78,8 @@ const { token } = useAuth();
    
   useEffect(() => {
   if (!token) {
+    disconnectSocket();
+    setSocket(null);
     return;
   }
 
@@ -101,6 +106,8 @@ const { token } = useAuth();
   return () => {
     currentSocket.off("incoming_vibe", handleIncomingVibe);
     currentSocket.off("match_created", handleMatchCreated);
+    disconnectSocket();
+    setSocket(null);
   };
 }, [token]);
 

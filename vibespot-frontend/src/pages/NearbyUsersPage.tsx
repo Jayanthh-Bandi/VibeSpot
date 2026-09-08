@@ -10,7 +10,7 @@ import PageHeader from "../components/PageHeader";
 import { checkInService } from "../services/checkInService";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
-import { sendVibe } from "../services/vibeService";
+import { removeVibe, sendVibe } from "../services/vibeService";
 import NotificationBell from "../components/NotificationBell";
 import { useSocket } from "../hooks/SocketContext";
 import PendingVibesDrawer from "../components/PendingVibesDrawer";
@@ -22,10 +22,12 @@ import {
 
 
 import PendingVibeCard from "../components/PendingVibeCard";
+import toast from "react-hot-toast";
 const NearbyUsersPage = () => {
   const [users, setUsers] = useState<NearbyUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [likedUsers, setLikedUsers] = useState<Set<string>>(new Set());
 const [isPendingVibesOpen, setIsPendingVibesOpen] =
   useState(false);
   
@@ -87,10 +89,7 @@ const handleNotificationClick = async () => {
 
     navigate("/");
   } catch (error: any) {
-    alert(
-      error.response?.data?.message ??
-      "Unable to check out."
-    );
+  toast.error(error.response?.data?.message ?? "Unable to check out.");
   } finally {
     setCheckingOut(false);
   }
@@ -119,14 +118,38 @@ const handleSendVibe = async (
         },
       });
     } else {
-      alert(response.message);
+      toast.success(response.message);
+      setLikedUsers((previous) => new Set(previous).add(receiverId));
     }
   } catch (error: any) {
-    alert(
+    toast.error(
       error.response?.data?.message ??
       "Unable to send vibe."
     );
   }
+};
+
+const handleToggleLike = async (
+  receiverId: string,
+  username: string,
+  avatarEmoji: string
+) => {
+  if (likedUsers.has(receiverId)) {
+    try {
+      await removeVibe(receiverId);
+      setLikedUsers((previous) => {
+        const next = new Set(previous);
+        next.delete(receiverId);
+        return next;
+      });
+      toast.success(`You removed your vibe to ${username}.`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message ?? "Unable to remove vibe.");
+    }
+    return;
+  }
+
+  await handleSendVibe(receiverId, username, avatarEmoji, "❤️");
 };
 
 
@@ -218,12 +241,12 @@ const [checkingOut, setCheckingOut] =
     avatar={item.users.avatar_emoji}
     username={item.users.username}
     placeName={item.place_name}
+    isLiked={likedUsers.has(item.users.id)}
     onHeart={() =>
-  handleSendVibe(
+  handleToggleLike(
     item.users.id,
     item.users.username,
     item.users.avatar_emoji,
-    "❤️"
   )
 }
 
@@ -280,6 +303,14 @@ onWave={() =>
     avatarEmoji={vibe.sender.avatar_emoji}
     emoji={vibe.emoji}
     createdAt={vibe.created_at}
+    onVibeBack={() =>
+      handleSendVibe(
+        vibe.sender.id,
+        vibe.sender.username,
+        vibe.sender.avatar_emoji,
+        "❤️"
+      )
+    }
   />
 ))
 )}

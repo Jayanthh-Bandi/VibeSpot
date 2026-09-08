@@ -73,8 +73,6 @@ const LoginPage = () => {
   response.data.user
           );
 
-navigate("/");
-      
       navigate("/");
     } catch (error: any) {
       setErrors((prev) => ({

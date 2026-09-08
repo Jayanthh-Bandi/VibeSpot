@@ -22,6 +22,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,6 +79,12 @@ const ChatPage = () => {
       try {
         const response = await getMessages(matchId);
         setMessages(response.data);
+        setLoadError("");
+      } catch (error: any) {
+        setLoadError(
+          error.response?.data?.message ??
+            "This chat could not be loaded. Please return to your matches."
+        );
       } finally {
         setLoading(false);
       }
@@ -110,7 +117,15 @@ const ChatPage = () => {
       <ChatHeader />
 
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6">
-        {messages.length === 0 && !isTyping ? (
+        {loadError ? (
+          <div className="mx-auto mt-12 max-w-md rounded-3xl bg-white p-8 text-center shadow-sm">
+            <div className="text-5xl">💬</div>
+            <h2 className="mt-4 text-xl font-bold text-slate-900">
+              Chat unavailable
+            </h2>
+            <p className="mt-2 text-slate-500">{loadError}</p>
+          </div>
+        ) : messages.length === 0 && !isTyping ? (
           <EmptyChat />
         ) : (
           <>

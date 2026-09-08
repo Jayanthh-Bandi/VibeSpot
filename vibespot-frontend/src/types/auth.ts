@@ -27,3 +27,9 @@ export interface AuthResponse {
     user: User;
   };
 }
+
+export interface UpdateProfileRequest {
+  username?: string;
+  avatarEmoji?: string;
+  password?: string;
+}

@@ -93,7 +93,7 @@ const RegisterPage = () => {
       console.log(response)
      
 
-      navigate("/");
+      navigate("/login");
     } catch (error: any) {
       setErrors((prev) => ({
         ...prev,

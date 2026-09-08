@@ -7,7 +7,8 @@ import {
   type ReactNode,
 } from "react";
 import type { User } from "../types/auth";
-import { connectSocket, disconnectSocket } from "../services/socketService";
+import { disconnectSocket } from "../services/socketService";
+import { getCurrentUser } from "../services/authService";
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -15,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
 
   login: (token: string, user: User) => void;
+  updateUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -30,25 +32,37 @@ export function AuthProvider({ children }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+   let mounted = true;
+   const storedToken = localStorage.getItem("token");
+   const storedUser = localStorage.getItem("user");
 
-if (storedToken && storedUser && storedUser !== "undefined") {
-  try {
-    setToken(storedToken);
-    setUser(JSON.parse(storedUser));
-  } catch (error) {
-    console.error("Invalid user in localStorage", error);
+   const restoreSession = async () => {
+     if (!storedToken || !storedUser || storedUser === "undefined") {
+       if (mounted) setLoading(false);
+       return;
+     }
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-  }
-}
+     try {
+       const response = await getCurrentUser();
+       if (!mounted) return;
+       setToken(storedToken);
+       setUser(response.user);
+       localStorage.setItem("user", JSON.stringify(response.user));
+     } catch {
+       localStorage.removeItem("token");
+       localStorage.removeItem("user");
+       disconnectSocket();
+     } finally {
+       if (mounted) setLoading(false);
+     }
+   };
 
-setLoading(false);
+   restoreSession();
 
-    setLoading(false);
-  }, []);
+   return () => {
+     mounted = false;
+   };
+ }, []);
 
  const login = (newToken: string, newUser: User) => {
   localStorage.setItem("token", newToken);
@@ -67,12 +81,18 @@ setLoading(false);
     setUser(null);
   };
 
+  const updateUser = (newUser: User) => {
+    localStorage.setItem("user", JSON.stringify(newUser));
+    setUser(newUser);
+  };
+
   const value = useMemo(
     () => ({
       user,
       token,
       loading,
       login,
+      updateUser,
       logout,
       isAuthenticated: !!token,
     }),

@@ -6,6 +6,13 @@ export const saveMessageService = async ({
     senderId,
     content
 }) => {
+    if (typeof content !== "string" || !content.trim()) {
+        throw new AppError("Message cannot be empty.", 400);
+    }
+
+    if (content.trim().length > 1000) {
+        throw new AppError("Message must be 1000 characters or less.", 400);
+    }
 
     const { data, error } = await supabase
         .from("messages")
@@ -40,7 +47,7 @@ export const saveMessageService = async ({
 // };
 
 
-export const getMessagesService = async (chatRoomId) => {
+export const getMessagesService = async (chatRoomId, userId) => {
 
     console.log("Chat Room ID:", chatRoomId);
 
@@ -48,6 +55,7 @@ export const getMessagesService = async (chatRoomId) => {
         .from("matches")
         .select("*")
         .eq("chat_room_id", chatRoomId)
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
         .single();
 
     console.log("Match:", match);

@@ -5,7 +5,7 @@ import { mapMessages } from "../mappers/messageMapper.js";
 
 export const getMessages = asyncHandler(async (req, res) => {
 
-    const messages = await getMessagesService(req.params.matchId);
+    const messages = await getMessagesService(req.params.matchId, req.user.id);
 
     return res.status(200).json(
 

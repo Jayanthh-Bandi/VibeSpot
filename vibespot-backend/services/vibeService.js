@@ -1,7 +1,59 @@
 import supabase from "../config/supabase.js";
 import { v4 as uuidv4 } from "uuid";
-import AppError from "../utils/appError.js";
+import AppError from "../utils/AppError.js";
 import { getSocketByUserId } from "./socketRegistry.js";
+
+const getActiveCheckIn = async (userId) => {
+    const { data, error } = await supabase
+        .from("checkins")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .order("checkin_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        throw new AppError(error.message, 500);
+    }
+
+    return data;
+};
+
+const findVibe = async (senderId, receiverId) => {
+    const { data, error } = await supabase
+        .from("vibes")
+        .select("*")
+        .eq("sender_id", senderId)
+        .eq("receiver_id", receiverId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        throw new AppError(error.message, 500);
+    }
+
+    return data;
+};
+
+const findMatch = async (userId, otherUserId) => {
+    const { data, error } = await supabase
+        .from("matches")
+        .select("id, chat_room_id")
+        .or(
+            `and(user1_id.eq.${userId},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${userId})`
+        )
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        throw new AppError(error.message, 500);
+    }
+
+    return data;
+};
 
 export const sendVibeService = async (sender, body) => {
 
@@ -36,24 +88,14 @@ export const sendVibeService = async (sender, body) => {
     }
 
     // Step 4 - Sender active check-in
-    const { data: senderCheckIn } = await supabase
-        .from("checkins")
-        .select("*")
-        .eq("user_id", sender.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    const senderCheckIn = await getActiveCheckIn(sender.id);
 
     if (!senderCheckIn) {
         throw new AppError("You are not checked in.",400);
     }
 
     // Step 5 - Receiver active check-in
-    const { data: receiverCheckIn } = await supabase
-        .from("checkins")
-        .select("*")
-        .eq("user_id", receiverId)
-        .eq("is_active", true)
-        .maybeSingle();
+    const receiverCheckIn = await getActiveCheckIn(receiverId);
 
     if (!receiverCheckIn) {
         throw new AppError("Receiver is not checked in.",400);
@@ -66,26 +108,38 @@ export const sendVibeService = async (sender, body) => {
 
     // We will continue from here in the next step.
     // Step 7 - Check duplicate pending vibe
-    const { data: duplicateVibe } = await supabase
-        .from("vibes")
-        .select("*")
-        .eq("sender_id", sender.id)
-        .eq("receiver_id", receiverId)
-        .maybeSingle();
+    const duplicateVibe = await findVibe(sender.id, receiverId);
 
     if (duplicateVibe) {
-        throw new AppError("You have already sent a vibe to this user.",409);
+        const existingMatch = await findMatch(sender.id, receiverId);
+
+        if (existingMatch) {
+            return {
+                matched: true,
+                message: "You are already matched with this user.",
+                chatRoomId: existingMatch.chat_room_id
+            };
+        }
+
+        throw new AppError(
+            "You have already sent a vibe to this user. Wait for their response.",
+            409
+        );
     }
 
     // Step 8 - Check reverse vibe
-    const { data: reverseVibe } = await supabase
-        .from("vibes")
-        .select("*")
-        .eq("sender_id", receiverId)
-        .eq("receiver_id", sender.id) // Use your current column name if it's still "receiver_id"
-        .maybeSingle();
+    const reverseVibe = await findVibe(receiverId, sender.id);
 
     if (reverseVibe) {
+        const existingMatch = await findMatch(sender.id, receiverId);
+
+        if (existingMatch) {
+            return {
+                matched: true,
+                message: "You are already matched with this user.",
+                chatRoomId: existingMatch.chat_room_id
+            };
+        }
 
         const chatRoomId = uuidv4();
         const senderSocket = getSocketByUserId(sender.id);
@@ -107,6 +161,16 @@ export const sendVibeService = async (sender, body) => {
 
 
         if (matchError) {
+            const matchAfterConflict = await findMatch(sender.id, receiverId);
+
+            if (matchAfterConflict) {
+                return {
+                    matched: true,
+                    message: "You are already matched with this user.",
+                    chatRoomId: matchAfterConflict.chat_room_id
+                };
+            }
+
             throw new Error(matchError.message);
         }
 
@@ -201,9 +265,6 @@ if (receiverSocket) {
         message: "Vibe sent successfully."
     };
 
-    return {
-        message: "All validations passed. Ready to send vibe."
-    };
 };
 
 export const getPendingVibesService = async (userId) => {
@@ -232,4 +293,20 @@ export const getPendingVibesService = async (userId) => {
         pendingVibes: data
     };
 
+};
+
+export const removeVibeService = async (senderId, receiverId) => {
+    const { error } = await supabase
+        .from("vibes")
+        .delete()
+        .eq("sender_id", senderId)
+        .eq("receiver_id", receiverId);
+
+    if (error) {
+        throw new AppError(error.message, 500);
+    }
+
+    return {
+        message: "Vibe removed."
+    };
 };

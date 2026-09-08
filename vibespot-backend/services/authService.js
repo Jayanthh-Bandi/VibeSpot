@@ -1,5 +1,6 @@
 import validator from "validator";
 import supabase from "../config/supabase.js";
+import { env } from "../config/env.js";
 
 export const registerUserService = async ({
     email,
@@ -84,22 +85,18 @@ export const loginUserService = async ({ email, password }) => {
         throw new Error(error.message);
     }
 
+    const profile = await getCurrentUserService(data.user);
+
     return {
         message: "Login successful.",
         session: data.session,
-        user: data.user
+        user: profile
     };
 };
 export const getCurrentUserService = async (user) => {
-
     const { data, error } = await supabase
         .from("users")
-        .select(`
-            id,
-            username,
-            email,
-            avatar_emoji
-        `)
+        .select("id, username, email, avatar_emoji")
         .eq("id", user.id)
         .single();
 
@@ -108,15 +105,78 @@ export const getCurrentUserService = async (user) => {
     }
 
     return {
-
         id: data.id,
-
         username: data.username,
-
         email: data.email,
-
         avatarEmoji: data.avatar_emoji
-
     };
-
 };
+
+export const updateUserProfileService = async (user, {
+        username,
+        avatarEmoji,
+        password
+    }) => {
+        const updates = {};
+
+        if (username !== undefined) {
+            if (!username.trim()) {
+                throw new Error("Username cannot be empty.");
+            }
+
+            const { data: existingUser, error: usernameError } = await supabase
+                .from("users")
+                .select("id")
+                .eq("username", username.trim())
+                .neq("id", user.id)
+                .maybeSingle();
+
+            if (usernameError) {
+                throw new Error(usernameError.message);
+            }
+
+            if (existingUser) {
+                throw new Error("Username already exists.");
+            }
+
+            updates.username = username.trim();
+        }
+
+        if (avatarEmoji !== undefined) {
+            updates.avatar_emoji = avatarEmoji;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            const { error } = await supabase
+                .from("users")
+                .update(updates)
+                .eq("id", user.id);
+
+            if (error) {
+                throw new Error(error.message);
+            }
+        }
+
+        if (password !== undefined) {
+            if (password.length < 8) {
+                throw new Error("Password must contain at least 8 characters.");
+            }
+
+            const response = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+                method: "PUT",
+                headers: {
+                    apikey: env.SUPABASE_ANON_KEY,
+                    Authorization: "Bearer " + user.accessToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ password })
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.msg || result.message || "Unable to update password.");
+            }
+        }
+
+        return getCurrentUserService(user);
+    };

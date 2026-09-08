@@ -1,5 +1,20 @@
 import supabase from "../config/supabase.js";
 
+const getActiveCheckIns = async (userId) => {
+    const { data, error } = await supabase
+        .from("checkins")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .order("checkin_at", { ascending: false });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return data ?? [];
+};
+
 export const checkInService = async (user, body) => {
 
     const { placeName, lat, lng } = body;
@@ -10,18 +25,9 @@ export const checkInService = async (user, body) => {
     }
 
     // Check for existing active check-in
-    const { data: existingCheckIn, error: existingError } = await supabase
-        .from("checkins")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    const existingCheckIns = await getActiveCheckIns(user.id);
 
-    if (existingError) {
-        throw new Error(existingError.message);
-    }
-
-    if (existingCheckIn) {
+    if (existingCheckIns.length > 0) {
         throw new Error("You already have an active check-in.");
     }
 
@@ -51,20 +57,14 @@ export const checkInService = async (user, body) => {
 };
 export const checkOutService = async (user) => {
 
-    // Find active check-in
-    const { data: activeCheckIn, error: findError } = await supabase
-        .from("checkins")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    // Fetch all active rows so legacy duplicate rows do not break checkout.
+    const activeCheckIns = await getActiveCheckIns(user.id);
 
-    if (findError) {
-        throw new Error(findError.message);
-    }
-
-    if (!activeCheckIn) {
-        throw new Error("No active check-in found.");
+    if (activeCheckIns.length === 0) {
+        return {
+            message: "You were already checked out.",
+            checkOut: null
+        };
     }
 
     // Update the record
@@ -74,32 +74,28 @@ export const checkOutService = async (user) => {
             is_active: false,
             checkout_at: new Date()
         })
-        .eq("id", activeCheckIn.id)
-        .select()
-        .single();
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .select();
 
     if (error) {
         throw new Error(error.message);
     }
 
+    if (!data || data.length === 0) {
+        throw new Error("Unable to complete checkout. Please try again.");
+    }
+
     return {
         message: "Checked out successfully.",
-        checkOut: data
+        checkOut: data?.[0] ?? null
     };
 };
 
 export const getMyCheckInService = async (user) => {
 
-    const { data, error } = await supabase
-        .from("checkins")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-
-    if (error) {
-        throw new Error(error.message);
-    }
+    const activeCheckIns = await getActiveCheckIns(user.id);
+    const data = activeCheckIns[0] ?? null;
 
     if (!data) {
         return {
@@ -118,16 +114,8 @@ export const getMyCheckInService = async (user) => {
 export const getNearbyUsersService = async (user) => {
 
     // Step 1: Find current user's active check-in
-    const { data: myCheckIn, error: myError } = await supabase
-        .from("checkins")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-
-    if (myError) {
-        throw new Error(myError.message);
-    }
+    const activeCheckIns = await getActiveCheckIns(user.id);
+    const myCheckIn = activeCheckIns[0] ?? null;
 
     if (!myCheckIn) {
         throw new Error("You are not currently checked in.");

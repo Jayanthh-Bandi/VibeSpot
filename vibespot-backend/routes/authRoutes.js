@@ -3,6 +3,7 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
+  updateUserProfile,
   logoutUser,
 } from "../controllers/authController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -33,6 +34,8 @@ router.get(
     authMiddleware,
     getCurrentUser
 );
+
+router.patch("/profile", authMiddleware, updateUserProfile);
 
 // Logout
 router.post("/logout", logoutUser);
