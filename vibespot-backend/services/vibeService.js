@@ -141,6 +141,17 @@ export const sendVibeService = async (sender, body) => {
             };
         }
 
+        // Fetch sender profile data before creating match payloads
+        const { data: senderProfile, error: senderProfileError } = await supabase
+            .from("users")
+            .select("username, avatar_emoji")
+            .eq("id", sender.id)
+            .single();
+
+        if (senderProfileError) {
+            throw new AppError("Unable to fetch sender profile.", 500);
+        }
+
         const chatRoomId = uuidv4();
         const senderSocket = getSocketByUserId(sender.id);
 
@@ -195,8 +206,8 @@ const matchPayloadForReceiver = {
     matchId: chatRoomId,
     otherUser: {
         id: sender.id,
-        username: sender.username,
-        avatar_emoji: sender.avatar_emoji,
+        username: senderProfile.username,
+        avatar_emoji: senderProfile.avatar_emoji,
     },
 };
 
@@ -242,6 +253,12 @@ if (receiverSocket) {
     const receiverSocket = getSocketByUserId(receiverId);
 
     if (receiverSocket) {
+        // Fetch sender profile for incoming vibe payload
+        const { data: senderProfile } = await supabase
+            .from("users")
+            .select("username, avatar_emoji")
+            .eq("id", sender.id)
+            .single();
 
         receiverSocket.emit("incoming_vibe", {
     id: vibe.id,
@@ -250,8 +267,8 @@ if (receiverSocket) {
 
     sender: {
         id: sender.id,
-        username: sender.username,
-        avatar_emoji: sender.avatar_emoji
+        username: senderProfile?.username || "Unknown",
+        avatar_emoji: senderProfile?.avatar_emoji || "👤"
     }
 });
 

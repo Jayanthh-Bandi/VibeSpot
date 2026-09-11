@@ -4,7 +4,7 @@ export const mapMatch = (match, matchedUser) => {
 
         matchId: match.id,
 
-        chatRoomId: match.chat_room_id,
+        chatRoomId: match.chat_room_id, 
 
         expiresAt: match.expires_at,
 
@@ -14,7 +14,7 @@ export const mapMatch = (match, matchedUser) => {
 
             username: matchedUser.username,
 
-            avatarEmoji: matchedUser.avatar
+            avatarEmoji: matchedUser.avatar_emoji
 
         }
 

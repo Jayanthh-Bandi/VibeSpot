@@ -16,7 +16,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     clearMatch,
     } = useSocket();
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50">
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         {children}
       </main>

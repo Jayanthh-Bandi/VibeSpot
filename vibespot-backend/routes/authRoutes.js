@@ -19,21 +19,15 @@ router.post("/login", loginUser);
 
 console.log("Profile route registered");
 
-router.get("/profile", authMiddleware, (req, res) => {
-
-    return res.json({
-        success: true,
-        user: req.user
-    });
-
-});
-
-// Get Logged-in User
+// Get Logged-in User (clean profile data)
 router.get(
     "/me",
     authMiddleware,
     getCurrentUser
 );
+
+// Deprecated: use /me instead
+router.get("/profile", authMiddleware, getCurrentUser);
 
 router.patch("/profile", authMiddleware, updateUserProfile);
 

@@ -34,8 +34,8 @@ const ChatPage = () => {
       console.log("Joined room");
     };
 
-    const onUserTyping = (data: { email: string }) => {
-      if (data.email !== user?.email) {
+    const onUserTyping = (data: { userId: string }) => {
+      if (data.userId !== user?.id) {
         setIsTyping(true);
       }
     };
@@ -113,7 +113,7 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-slate-100">
+    <div className="flex h-screen flex-col bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50">
       <ChatHeader />
 
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6">

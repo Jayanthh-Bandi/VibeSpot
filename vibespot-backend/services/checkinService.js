@@ -56,36 +56,48 @@ export const checkInService = async (user, body) => {
 
 };
 export const checkOutService = async (user) => {
+    console.log("=== CHECKOUT SERVICE START ===");
+    console.log("User ID:", user.id);
 
     // Fetch all active rows so legacy duplicate rows do not break checkout.
     const activeCheckIns = await getActiveCheckIns(user.id);
+    console.log("Active check-ins found:", activeCheckIns.length);
 
     if (activeCheckIns.length === 0) {
+        console.log("No active check-ins, returning already checked out message");
         return {
             message: "You were already checked out.",
             checkOut: null
         };
     }
 
+    console.log("Attempting to update check-ins to is_active=false");
+
     // Update the record
     const { data, error } = await supabase
         .from("checkins")
         .update({
             is_active: false,
-            checkout_at: new Date()
+            checkout_at: new Date().toISOString()
         })
         .eq("user_id", user.id)
         .eq("is_active", true)
         .select();
 
+    console.log("Update result - error:", error);
+    console.log("Update result - data:", data);
+
     if (error) {
+        console.error("Supabase update error:", error);
         throw new Error(error.message);
     }
 
     if (!data || data.length === 0) {
+        console.error("Update returned no data");
         throw new Error("Unable to complete checkout. Please try again.");
     }
 
+    console.log("Checkout successful");
     return {
         message: "Checked out successfully.",
         checkOut: data?.[0] ?? null

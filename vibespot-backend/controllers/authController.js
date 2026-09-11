@@ -5,6 +5,7 @@ import {
 } from "../services/authService.js";
 import { updateUserProfileService } from "../services/authService.js";
 import { successResponse,errorResponse } from "../utils/apiResponse.js";
+import supabase from "../config/supabase.js";
 export const registerUser = async (req, res) => {
 
      console.log("🔥 loginUser controller executed");
@@ -116,5 +117,24 @@ export const updateUserProfile = async (req, res) => {
 };
 
 export const logoutUser = async (req, res) => {
-    res.json({ message: "Logout coming soon." });
+    try {
+        const { data, error } = await supabase.auth.signOut();
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Logged out successfully."
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
 };

@@ -87,18 +87,18 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg space-y-5"
+        className="w-full max-w-md rounded-2xl bg-white/90 backdrop-blur-lg p-8 shadow-2xl border border-violet-100 space-y-5"
       >
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
             Welcome Back
           </h1>
 
-          <p className="text-gray-500 mt-2">
-            Login to continue
+          <p className="text-gray-600 mt-2 font-medium">
+            Login to continue your journey
           </p>
         </div>
 
@@ -139,16 +139,16 @@ const LoginPage = () => {
         <CustomButton
   type="submit"
   loading={loading}
-  className="mt-2 py-3 text-lg"
+  className="mt-2 py-3 text-lg bg-gradient-to-r from-rose-500 via-purple-500 to-indigo-500 hover:from-rose-600 hover:via-purple-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
 >
   Sign In
 </CustomButton>
 
-        <p className="text-center text-sm">
+        <p className="text-center text-sm text-gray-600">
           Don't have an account?{" "}
           <Link
             to="/register"
-            className="text-blue-600 font-medium"
+            className="text-purple-600 font-semibold hover:text-purple-700 transition-colors"
           >
             Register
           </Link>

@@ -48,7 +48,7 @@ export const registerSocketEvents = (io, socket) => {
 
         socket.to(socket.chatRoomId).emit("user_typing", {
 
-            email: socket.user.email
+            userId: socket.user.id
 
         });
 
